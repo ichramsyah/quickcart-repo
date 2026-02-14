@@ -1,0 +1,55 @@
+services:
+  app:
+    image: ichramsyah/quickcart:v1
+    container_name: quickcart-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=quickcart
+      - DB_PASSWORD=rahasiabanget
+      - DB_NAME=quickcart
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - backend-net
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: quickcart-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=quickcart
+      - POSTGRES_PASSWORD=rahasiabanget
+      - POSTGRES_DB=quickcart
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quickcart"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: quickcart-redis
+    restart: unless-stopped
+    networks:
+      - backend-net
+
+volumes:
+  postgres_data:
+
+networks:
+  backend-net:
+    name: backend-net 
+    driver: bridge

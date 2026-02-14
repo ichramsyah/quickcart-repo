@@ -1,0 +1,101 @@
+services:
+  # MONITORING INFRASTRUCTURE (HOST)
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: quickcart-node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - backend-net
+
+  # MONITORING CONTAINER (cAdvisor) ---
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: quickcart-cadvisor
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "8081:8080" 
+    group_add:
+      - "1001"
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      - /var/lib/dbus/machine-id:/var/lib/dbus/machine-id:ro
+    networks:
+      - backend-net
+
+  # PROMETHEUS (PENGUMPUL DATA)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: quickcart-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - backend-net
+
+  # LOKI (PENYIMPAN LOGS)
+  loki:
+    image: grafana/loki:latest
+    container_name: quickcart-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - backend-net
+
+  # 5. PROMTAIL (PENGIRIM LOGS)
+  promtail:
+    image: grafana/promtail:latest
+    container_name: quickcart-promtail
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail-config.yaml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - backend-net
+
+  # GRAFANA (VISUALISASI)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: quickcart-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - backend-net
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  backend-net:
+    external: true
+    name: backend-net
