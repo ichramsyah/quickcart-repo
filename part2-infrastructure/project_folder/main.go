@@ -130,13 +130,13 @@ func initDB() error {
 
 	// Create products table
 	_, err := db.Exec(`
-		CREATE TABLE IF NOT EXISTS products (
-			id SERIAL PRIMARY KEY,
-			name VARCHAR(255) NOT NULL,
-			price DECIMAL(10,2) NOT NULL,
-			stock INTEGER NOT NULL DEFAULT 0
-		)
-	`)
+        CREATE TABLE IF NOT EXISTS products (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            price DECIMAL(10,2) NOT NULL,
+            stock INTEGER NOT NULL DEFAULT 0
+        )
+    `)
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,8 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	templates.ExecuteTemplate(w, "index", products)
+	// FIX: Explicitly ignore error to pass linter
+	_ = templates.ExecuteTemplate(w, "index", products)
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -210,7 +211,8 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	// FIX: Explicitly ignore error to pass linter
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 func handleProducts(w http.ResponseWriter, r *http.Request) {
@@ -237,7 +239,8 @@ func handleProducts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(products)
+	// FIX: Explicitly ignore error to pass linter
+	_ = json.NewEncoder(w).Encode(products)
 }
 
 // handleError returns a 500 error for testing monitoring/alerting
@@ -263,7 +266,8 @@ func handleSlow(w http.ResponseWriter, r *http.Request) {
 	time.Sleep(time.Duration(delayMs) * time.Millisecond)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	// FIX: Explicitly ignore error to pass linter
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"message":  "Slow response completed",
 		"delay_ms": delayMs,
 	})
