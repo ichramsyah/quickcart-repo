@@ -1,0 +1,52 @@
+name: CI - Go Quality Gate
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./part2-infrastructure/project_folder
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Setup Go
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22' 
+          cache-dependency-path: ./part2-infrastructure/project_folder/go.sum
+
+      - name: Install Dependencies
+        run: go mod download
+
+      # Code Quality
+      - name: Run GolangCI-Lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          working-directory: ./part2-infrastructure/project_folder
+          args: --timeout=5m
+
+      # Testing
+      - name: Run Unit Tests
+        run: |
+          echo "Running Go Tests..."
+          go test -v ./... 
+          echo "✅ All tests passed!"
+
+      # Security Scan 
+      - name: Security Scan (Trivy FS)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './part2-infrastructure/project_folder'
+          ignore-unfixed: true
+          severity: 'CRITICAL'
+          exit-code: '1'
