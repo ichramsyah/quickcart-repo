@@ -10,7 +10,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./submission/part2-infrastructure/project_folder
+        working-directory: ./part2-infrastructure/project_folder
 
     steps:
       - name: Checkout Code
@@ -26,7 +26,7 @@ jobs:
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v4
         with:
-          context: ./submission/part2-infrastructure/project_folder
+          context: ./part2-infrastructure/project_folder
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/quickcart:latest
 
